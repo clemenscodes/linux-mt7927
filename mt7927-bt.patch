@@ -1,6 +1,8 @@
+diff --git a/drivers/bluetooth/btmtk.c b/drivers/bluetooth/btmtk.c
+index a8c520dc0..844e98b15 100644
 --- a/drivers/bluetooth/btmtk.c
 +++ b/drivers/bluetooth/btmtk.c
-@@ -112,7 +112,11 @@
+@@ -112,7 +112,11 @@ static void btmtk_coredump_notify(struct hci_dev *hdev, int state)
  void btmtk_fw_get_filename(char *buf, size_t size, u32 dev_id, u32 fw_ver,
  			   u32 fw_flavor)
  {
@@ -13,10 +15,10 @@
  		snprintf(buf, size,
  			 "mediatek/mt%04x/BT_RAM_CODE_MT%04x_1_%x_hdr.bin",
  			 dev_id & 0xffff, dev_id & 0xffff, (fw_ver & 0xff) + 1);
-@@ -166,6 +170,15 @@
+@@ -166,6 +170,15 @@ int btmtk_setup_firmware_79xx(struct hci_dev *hdev, const char *fwname,
  		section_offset = le32_to_cpu(sectionmap->secoffset);
  		dl_size = le32_to_cpu(sectionmap->bin_info_spec.dlsize);
-
+ 
 +                /* MT6639: only download sections where dlmode byte0 == 0x01,
 +                 * matching the Windows driver behavior which skips WiFi/other
 +                 * sections that would cause the chip to hang.
@@ -29,7 +31,7 @@
  		if (dl_size > 0) {
  			retry = 20;
  			while (retry > 0) {
-@@ -840,7 +853,7 @@
+@@ -840,7 +853,7 @@ int btmtk_usb_subsys_reset(struct hci_dev *hdev, u32 dev_id)
  		if (err < 0)
  			return err;
  		msleep(100);
@@ -38,7 +40,7 @@
  		err = btmtk_usb_uhw_reg_read(hdev, MTK_BT_RESET_REG_CONNV3, &val);
  		if (err < 0)
  			return err;
-@@ -1324,23 +1337,24 @@
+@@ -1324,6 +1337,7 @@ int btmtk_usb_setup(struct hci_dev *hdev)
  		fwname = FIRMWARE_MT7668;
  		break;
  	case 0x7922:
@@ -46,23 +48,8 @@
  	case 0x7925:
  	case 0x7961:
  		btmtk_fw_get_filename(fw_bin_name, sizeof(fw_bin_name), dev_id,
- 				      fw_version, fw_flavor);
-
- 		err = btmtk_setup_firmware_79xx(hdev, fw_bin_name,
- 						btmtk_usb_hci_wmt_sync);
- 		if (err < 0) {
- 			bt_dev_err(hdev, "Failed to set up firmware (%d)", err);
- 			return err;
- 		}
-
- 		/* It's Device EndPoint Reset Option Register */
- 		err = btmtk_usb_uhw_reg_write(hdev, MTK_EP_RST_OPT,
- 					      MTK_EP_RST_IN_OUT_OPT);
- 		if (err < 0)
- 			return err;
-
- 		/* Enable Bluetooth protocol */
- 		param = 1;
+diff --git a/drivers/bluetooth/btmtk.h b/drivers/bluetooth/btmtk.h
+index 5df7c3296..8cab34328 100644
 --- a/drivers/bluetooth/btmtk.h
 +++ b/drivers/bluetooth/btmtk.h
 @@ -7,6 +7,7 @@
@@ -70,18 +57,18 @@
  #define FIRMWARE_MT7961		"mediatek/BT_RAM_CODE_MT7961_1_2_hdr.bin"
  #define FIRMWARE_MT7925		"mediatek/mt7925/BT_RAM_CODE_MT7925_1_1_hdr.bin"
 +#define FIRMWARE_MT7927		"mediatek/mt6639/BT_RAM_CODE_MT6639_2_1_hdr.bin"
-
+ 
  #define HCI_EV_WMT 0xe4
  #define HCI_WMT_MAX_EVENT_SIZE		64
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index ded09e94d..69ff7d67c 100644
 --- a/drivers/bluetooth/btusb.c
 +++ b/drivers/bluetooth/btusb.c
-@@ -733,6 +733,10 @@
+@@ -731,6 +731,8 @@ static const struct usb_device_id quirks_table[] = {
  						     BTUSB_WIDEBAND_SPEECH },
  	{ USB_DEVICE(0x0489, 0xe139), .driver_info = BTUSB_MEDIATEK |
  						     BTUSB_WIDEBAND_SPEECH },
 +	{ USB_DEVICE(0x0489, 0xe13a), .driver_info = BTUSB_MEDIATEK |
-+						     BTUSB_WIDEBAND_SPEECH },
-+	{ USB_DEVICE(0x0489, 0xe0fa), .driver_info = BTUSB_MEDIATEK |
 +						     BTUSB_WIDEBAND_SPEECH },
  	{ USB_DEVICE(0x0489, 0xe14e), .driver_info = BTUSB_MEDIATEK |
  						     BTUSB_WIDEBAND_SPEECH },
