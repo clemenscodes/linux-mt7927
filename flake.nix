@@ -288,8 +288,8 @@
             config = lib.mkIf cfg.enable {
               hardware = {
                 firmware = [
-                  (pkgs.callPackage mt7927-wlan-firmware {})
-                  (pkgs.callPackage mt7927-bt-firmware {})
+                  mt7927-wlan-firmware
+                  mt7927-bt-firmware
                 ];
               };
               boot = {
