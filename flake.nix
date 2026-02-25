@@ -20,7 +20,7 @@
       systems = [system];
       flake = {
         nixosModules = {
-          mt7927 = {
+          default = {
             pkgs,
             lib,
             config,
